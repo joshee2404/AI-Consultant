@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Readiness Decision Intelligence System — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #171b22;
+    --border: #1e2330;
+    --border-bright: #2a3145;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+
+    --frontend: #0ea5e9;
+    --frontend-bg: rgba(14,165,233,0.08);
+    --frontend-border: rgba(14,165,233,0.25);
+
+    --api: #f59e0b;
+    --api-bg: rgba(245,158,11,0.08);
+    --api-border: rgba(245,158,11,0.25);
+
+    --orchestration: #8b5cf6;
+    --orchestration-bg: rgba(139,92,246,0.08);
+    --orchestration-border: rgba(139,92,246,0.25);
+
+    --ai: #10b981;
+    --ai-bg: rgba(16,185,129,0.08);
+    --ai-border: rgba(16,185,129,0.25);
+
+    --db: #ef4444;
+    --db-bg: rgba(239,68,68,0.08);
+    --db-border: rgba(239,68,68,0.25);
+
+    --output: #f97316;
+    --output-bg: rgba(249,115,22,0.08);
+    --output-border: rgba(249,115,22,0.25);
+
+    --arrow: #334155;
+    --arrow-active: #475569;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .page-header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 56px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  /* ARCHITECTURE FLOW */
+  .arch {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  /* LAYER */
+  .layer {
+    position: relative;
+    padding: 0 0 0 0;
+  }
+
+  .layer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-left: 4px;
+  }
+
+  .layer-label span {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  /* CONNECTOR ARROW BETWEEN LAYERS */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .connector-line {
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(to bottom, var(--arrow), var(--arrow-active));
+    position: relative;
+  }
+
+  .connector-line::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid var(--arrow-active);
+  }
+
+  .connector-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin-top: 10px;
+    letter-spacing: 0.05em;
+    background: var(--bg);
+    padding: 0 6px;
+  }
+
+  /* BOXES */
+  .box-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .box {
+    border-radius: 8px;
+    padding: 14px 16px;
+    flex: 1;
+    min-width: 160px;
+    position: relative;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .box.frontend { border-color: var(--frontend-border); background: var(--frontend-bg); }
+  .box.api      { border-color: var(--api-border);      background: var(--api-bg); }
+  .box.orch     { border-color: var(--orchestration-border); background: var(--orchestration-bg); }
+  .box.ai-model { border-color: var(--ai-border);       background: var(--ai-bg); }
+  .box.db       { border-color: var(--db-border);       background: var(--db-bg); }
+  .box.output   { border-color: var(--output-border);   background: var(--output-bg); }
+
+  .box-icon {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+  }
+
+  .box-title {
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+    color: #fff;
+  }
+
+  .box-file {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .box-file .fname {
+    display: inline-block;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-bright);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-bottom: 2px;
+  }
+
+  .box-desc {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  .box-output-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 3px;
+    margin-top: 4px;
+  }
+
+  .tag-frontend { background: rgba(14,165,233,0.15); color: var(--frontend); border: 1px solid rgba(14,165,233,0.3); }
+  .tag-api      { background: rgba(245,158,11,0.15); color: var(--api);      border: 1px solid rgba(245,158,11,0.3); }
+  .tag-orch     { background: rgba(139,92,246,0.15); color: var(--orchestration); border: 1px solid rgba(139,92,246,0.3); }
+  .tag-ai       { background: rgba(16,185,129,0.15); color: var(--ai);       border: 1px solid rgba(16,185,129,0.3); }
+  .tag-db       { background: rgba(239,68,68,0.15);  color: var(--db);       border: 1px solid rgba(239,68,68,0.3); }
+  .tag-output   { background: rgba(249,115,22,0.15); color: var(--output);   border: 1px solid rgba(249,115,22,0.3); }
+
+  /* LAYER WRAPPERS */
+  .layer-block {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .layer-title {
+    position: absolute;
+    top: -11px;
+    left: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+
+  .lt-frontend { background: var(--frontend); color: #000; }
+  .lt-api      { background: var(--api); color: #000; }
+  .lt-orch     { background: var(--orchestration); color: #fff; }
+  .lt-ai       { background: var(--ai); color: #000; }
+  .lt-db       { background: var(--db); color: #fff; }
+  .lt-output   { background: var(--output); color: #000; }
+
+  /* INTERNAL ARROW (horizontal inside a layer) */
+  .h-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .h-arrow-line {
+    width: 28px;
+    height: 2px;
+    background: var(--arrow-active);
+    position: relative;
+  }
+
+  .h-arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid var(--arrow-active);
+  }
+
+  .h-arrow-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 3px;
+  }
+
+  /* SPLIT CONNECTOR: one layer fans into two */
+  .split-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+    width: 100%;
+  }
+
+  .split-top-line {
+    width: 2px;
+    height: 20px;
+    background: var(--arrow-active);
+  }
+
+  .split-horizontal {
+    display: flex;
+    align-items: center;
+    width: 70%;
+  }
+
+  .split-h-line {
+    flex: 1;
+    height: 2px;
+    background: var(--arrow-active);
+  }
+
+  .split-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--arrow-active);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .split-down-lines {
+    display: flex;
+    width: 70%;
+    justify-content: space-between;
+  }
+
+  .split-down-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .split-down-line .line {
+    width: 2px;
+    height: 20px;
+    background: var(--arrow-active);
+    position: relative;
+  }
+
+  .split-down-line .line::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid var(--arrow-active);
+  }
+
+  /* MERGE CONNECTOR: multiple feeds into one */
+  .merge-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+    width: 100%;
+  }
+
+  /* DB SIDE NOTE */
+  .db-side-row {
+    display: flex;
+    gap: 0;
+    align-items: center;
+  }
+
+  .db-side-row .main-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .db-side-row .side-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 12px;
+  }
+
+  .side-arrow-line {
+    height: 2px;
+    width: 32px;
+    background: var(--arrow-active);
+    position: relative;
+    margin-bottom: 3px;
+  }
+
+  .side-arrow-line.right::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid var(--arrow-active);
+  }
+
+  .side-arrow-line.left::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-right: 6px solid var(--arrow-active);
+  }
+
+  .side-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* DIVIDER */
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+  }
+
+  .wide-box { min-width: 100%; }
+
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    padding: 2px 5px;
+    border-radius: 2px;
+    margin-right: 3px;
+    margin-bottom: 2px;
+    border: 1px solid var(--border-bright);
+    color: var(--text-dim);
+    background: var(--surface2);
+  }
+
+  .model-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-weight: 700;
+    display: inline-block;
+    margin-top: 5px;
+    margin-right: 4px;
+  }
+
+  .mb-claude { background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4); }
+  .mb-titan  { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.4); }
+  .mb-textract { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+
+  hr.section-sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 8px 0;
+  }
+
+  .footnote {
+    max-width: 1200px;
+    margin: 48px auto 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .fn-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .fn-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .fn-list {
+    list-style: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .fn-list li::before {
+    content: '→ ';
+    color: var(--border-bright);
+  }
+
+  /* Two-column sub-layout inside orch layer */
+  .sub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .sub-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>AI Readiness Decision Intelligence System</h1>
+  <p>System Architecture · Full Data Flow · 6-Layer Design</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9"></div> Layer 1 — Frontend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Layer 2 — API Server</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Layer 3 — Orchestration</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Layer 4 — AI Models (Bedrock)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Layer 5 — Database</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div> Layer 6 — Output</div>
+</div>
+
+<div class="arch">
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- LAYER 1 — FRONTEND                                         -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="layer-block" style="border-color: var(--frontend-border);">
+    <div class="layer-title lt-frontend">Layer 1 — Frontend (React)</div>
+    <div class="box-row">
+
+      <div class="box frontend">
+        <div class="box-icon">📋</div>
+        <div class="box-title">Assessment Form</div>
+        <div class="box-file"><span class="fname">AssessmentForm.jsx</span></div>
+        <div class="box-desc">Multi-step form. Collects: company info, process descriptions, pain points, tech stack, data types, constraints.</div>
+        <span class="box-output-tag tag-frontend">→ Emits: Raw Form JSON</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">onSubmit</div>
+      </div>
+
+      <div class="box frontend">
+        <div class="box-icon">🔌</div>
+        <div class="box-title">API Service</div>
+        <div class="box-file"><span class="fname">services/api.js</span></div>
+        <div class="box-desc">Axios wrapper. Calls <code>POST /api/assess</code>. Polls status. Calls <code>GET /api/report/:id</code> for result.</div>
+        <span class="box-output-tag tag-frontend">→ Emits: HTTP Request</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">HTTP POST</div>
+      </div>
+
+      <div class="box frontend">
+        <div class="box-icon">⏳</div>
+        <div class="box-title">Processing Screen</div>
+        <div class="box-file"><span class="fname">ProcessingScreen.jsx</span></div>
+        <div class="box-desc">Shown while backend runs. Shows pipeline stages live: Analyzing → Scoring → Generating Report.</div>
+        <span class="box-output-tag tag-frontend">→ Emits: Poll Request</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">on complete</div>
+      </div>
+
+      <div class="box frontend">
+        <div class="box-icon">📊</div>
+        <div class="box-title">Results Dashboard</div>
+        <div class="box-file"><span class="fname">ResultsDashboard.jsx</span></div>
+        <div class="box-desc">Renders full report: opportunity cards, Impact/Complexity matrix, phased roadmap, executive summary, PDF download button.</div>
+        <span class="box-output-tag tag-frontend">→ Displays: Full Report</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR 1→2 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">POST /api/assess · { form payload JSON }</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- LAYER 2 — API SERVER                                       -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="layer-block" style="border-color: var(--api-border);">
+    <div class="layer-title lt-api">Layer 2 — API Server (FastAPI · Python)</div>
+    <div class="box-row">
+
+      <div class="box api">
+        <div class="box-icon">🚪</div>
+        <div class="box-title">Entry Point</div>
+        <div class="box-file"><span class="fname">main.py</span></div>
+        <div class="box-desc">Registers all routes. Initializes CORS, middleware, Bedrock client. Starts FastAPI app.</div>
+        <span class="box-output-tag tag-api">→ Routes: all endpoints</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">routes to</div>
+      </div>
+
+      <div class="box api">
+        <div class="box-icon">📐</div>
+        <div class="box-title">Input Validator</div>
+        <div class="box-file"><span class="fname">models/input_schema.py</span></div>
+        <div class="box-desc">Pydantic models. Validates form JSON structure, types, required fields. Rejects malformed input before processing.</div>
+        <span class="box-output-tag tag-api">→ Emits: Validated Input Object</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">if valid</div>
+      </div>
+
+      <div class="box api">
+        <div class="box-icon">🔀</div>
+        <div class="box-title">Assessment Router</div>
+        <div class="box-file"><span class="fname">routers/assessment.py</span></div>
+        <div class="box-desc">Handles <code>POST /assess</code>, <code>GET /report/:id</code>. Creates report_id, triggers async orchestration pipeline, returns job status.</div>
+        <span class="box-output-tag tag-api">→ Emits: report_id + triggers pipeline</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">async call</div>
+      </div>
+
+      <div class="box api">
+        <div class="box-icon">⚙️</div>
+        <div class="box-title">Bedrock Client</div>
+        <div class="box-file"><span class="fname">services/bedrock_client.py</span></div>
+        <div class="box-desc">boto3 session to AWS Bedrock. Exposes <code>invoke_claude()</code> and <code>get_embedding()</code>. Shared across all services.</div>
+        <span class="box-output-tag tag-api">→ Shared: Model Gateway</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR 2→3 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">Validated Input Object → Orchestration Pipeline</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- LAYER 3 — ORCHESTRATION                                    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="layer-block" style="border-color: var(--orchestration-border);">
+    <div class="layer-title lt-orch">Layer 3 — Orchestration (Sequential Pipeline · 4 Stages)</div>
+
+    <!-- STAGE 1 -->
+    <div style="margin-bottom:8px;">
+      <div class="layer-label"><span>Stage 1 — Pattern Detection</span></div>
+      <div class="box-row">
+        <div class="box orch" style="flex:2">
+          <div class="box-icon">🔍</div>
+          <div class="box-title">Analysis Engine</div>
+          <div class="box-file"><span class="fname">services/analysis_engine.py</span></div>
+          <div class="box-desc">Loads <code>prompts/analysis_prompt.py</code>. Sends structured prompt to Claude. Receives JSON: pattern types per process (repetitive / manual-decision / data-heavy), AI use case category, impact estimate, rationale per opportunity.</div>
+          <div>
+            <span class="model-badge mb-claude">Claude 3.5 Sonnet</span>
+          </div>
+          <span class="box-output-tag tag-orch">→ Output: Opportunity List (raw JSON)</span>
+        </div>
+        <div class="h-arrow">
+          <div class="h-arrow-line"></div>
+          <div class="h-arrow-label">opportunities[]</div>
+        </div>
+        <div class="box orch" style="flex:2">
+          <div class="box-icon">🧲</div>
+          <div class="box-title">Embedding Validator</div>
+          <div class="box-file"><span class="fname">services/embedding_service.py</span></div>
+          <div class="box-desc">Embeds each process description using Titan. Cosine-similarity match against 5 pre-embedded AI category vectors. Validates / corrects Claude's use case mapping. Ensures semantic accuracy.</div>
+          <div>
+            <span class="model-badge mb-titan">Titan Embeddings v1</span>
+          </div>
+          <span class="box-output-tag tag-orch">→ Output: Validated Opportunities + Similarity Scores</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-sep">
+
+    <!-- STAGE 2 -->
+    <div style="margin-bottom:8px;">
+      <div class="layer-label"><span>Stage 2 — Complexity Scoring</span></div>
+      <div class="box-row">
+        <div class="box orch" style="flex:1">
+          <div class="box-icon">🧮</div>
+          <div class="box-title">Complexity Scorer</div>
+          <div class="box-file"><span class="fname">services/complexity_scorer.py</span></div>
+          <div class="box-desc">Pure rule-based Python. No AI. Scores each opportunity on 3 axes from form data: data availability + integration dependency + real-time requirement. Sums to Low / Medium / High classification.</div>
+          <span class="box-output-tag tag-orch">→ Output: Complexity Score per Opportunity</span>
+        </div>
+        <div class="h-arrow">
+          <div class="h-arrow-line"></div>
+          <div class="h-arrow-label">scored list</div>
+        </div>
+        <div class="box orch" style="flex:1">
+          <div class="box-icon">📐</div>
+          <div class="box-title">Matrix Builder</div>
+          <div class="box-file"><span class="fname">utils/matrix_builder.py</span></div>
+          <div class="box-desc">Takes complexity (from scorer) + impact (from Claude) per opportunity. Builds 2D grid data structure for the Impact vs Complexity scatter matrix chart.</div>
+          <span class="box-output-tag tag-orch">→ Output: Impact/Complexity Matrix Data</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-sep">
+
+    <!-- STAGE 3 -->
+    <div>
+      <div class="layer-label"><span>Stage 3 — Report Generation</span></div>
+      <div class="box-row">
+        <div class="box orch" style="flex:2">
+          <div class="box-icon">📝</div>
+          <div class="box-title">Report Generator</div>
+          <div class="box-file"><span class="fname">services/report_generator.py</span></div>
+          <div class="box-desc">Loads <code>prompts/report_prompt.py</code>. Sends scored + validated opportunities to Claude. Claude generates: executive summary prose, 3-phase roadmap, tech stack per opportunity. Second and final Claude call.</div>
+          <div>
+            <span class="model-badge mb-claude">Claude 3.5 Sonnet</span>
+          </div>
+          <span class="box-output-tag tag-orch">→ Output: Executive Summary + Phased Roadmap + Tech Stack</span>
+        </div>
+        <div class="h-arrow">
+          <div class="h-arrow-line"></div>
+          <div class="h-arrow-label">full report</div>
+        </div>
+        <div class="box orch" style="flex:1">
+          <div class="box-icon">🔗</div>
+          <div class="box-title">Report Assembler</div>
+          <div class="box-file"><span class="fname">utils/report_assembler.py</span></div>
+          <div class="box-desc">Merges all pipeline outputs into one final report JSON object validated against <code>models/output_schema.py</code>. Assigns report_id and timestamp.</div>
+          <span class="box-output-tag tag-orch">→ Output: Final Assembled Report JSON</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONNECTOR 3→4 (split: AI calls) -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">API calls via bedrock_client.py → AWS Bedrock</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- LAYER 4 — AI MODELS                                        -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="layer-block" style="border-color: var(--ai-border);">
+    <div class="layer-title lt-ai">Layer 4 — AI Models (AWS Bedrock)</div>
+    <div class="sub-grid">
+
+      <div class="box ai-model">
+        <div class="box-icon">🧠</div>
+        <div class="box-title">Claude 3.5 Sonnet</div>
+        <div class="box-file"><span class="fname">anthropic.claude-3-5-sonnet-20240620</span></div>
+        <div class="box-desc">Called twice. Call 1 (analysis): pattern identification + use case mapping + impact scoring. Call 2 (report): executive summary + phased roadmap + tech recommendations.</div>
+        <span class="box-output-tag tag-ai">→ Call 1: Opportunity List JSON</span><br>
+        <span class="box-output-tag tag-ai">→ Call 2: Report Narrative JSON</span>
+      </div>
+
+      <div class="box ai-model">
+        <div class="box-icon">🔢</div>
+        <div class="box-title">Amazon Titan Embeddings</div>
+        <div class="box-file"><span class="fname">amazon.titan-embed-text-v1</span></div>
+        <div class="box-desc">Called once per assessment. Embeds process descriptions. Pre-embedded category vectors loaded at startup. Cosine similarity validates AI use case classification from Claude.</div>
+        <span class="box-output-tag tag-ai">→ Output: 1536-dim Similarity Vectors</span>
+      </div>
+
+      <div class="box ai-model">
+        <div class="box-icon">📄</div>
+        <div class="box-title">Prompt Templates</div>
+        <div class="box-file"><span class="fname">prompts/analysis_prompt.py</span><br><span class="fname">prompts/report_prompt.py</span></div>
+        <div class="box-desc">System prompt + user prompt templates. Injected with form data before each Claude call. Enforce JSON-only response format with explicit schema.</div>
+        <span class="box-output-tag tag-ai">→ Input: Structured Prompts to Claude</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR 3→5 (parallel: DB write) -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">Assembled Report JSON → Persist to Database</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- LAYER 5 — DATABASE                                         -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="layer-block" style="border-color: var(--db-border);">
+    <div class="layer-title lt-db">Layer 5 — Database (PostgreSQL / DynamoDB)</div>
+    <div class="box-row">
+
+      <div class="box db">
+        <div class="box-icon">💾</div>
+        <div class="box-title">Assessments Table</div>
+        <div class="box-file"><span class="fname">db/models/assessment.py</span></div>
+        <div class="box-desc">Stores: report_id, company_name, industry, created_at, status (processing / complete / failed), raw form input JSON.</div>
+        <span class="box-output-tag tag-db">→ Stores: Input Record</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">foreign key</div>
+      </div>
+
+      <div class="box db">
+        <div class="box-icon">📦</div>
+        <div class="box-title">Reports Table</div>
+        <div class="box-file"><span class="fname">db/models/report.py</span></div>
+        <div class="box-desc">Stores: full assembled report JSON, readiness score, opportunity count, phase count. Linked to assessment by report_id. Retrieved on <code>GET /report/:id</code>.</div>
+        <span class="box-output-tag tag-db">→ Stores: Full Report JSON</span>
+      </div>
+
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-label">links to</div>
+      </div>
+
+      <div class="box db">
+        <div class="box-icon">🔧</div>
+        <div class="box-title">DB Manager</div>
+        <div class="box-file"><span class="fname">db/database.py</span></div>
+        <div class="box-desc">SQLAlchemy session factory (or DynamoDB client). Exposes <code>save_report()</code>, <code>get_report(id)</code>, <code>update_status()</code>. Used by orchestration layer.</div>
+        <span class="box-output-tag tag-db">→ CRUD: Read / Write Operations</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR 5→6 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">Final Report JSON → Output Generation</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- LAYER 6 — OUTPUT                                           -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="layer-block" style="border-color: var(--output-border);">
+    <div class="layer-title lt-output">Layer 6 — Output (Deliverables)</div>
+    <div class="sub-grid">
+
+      <div class="box output">
+        <div class="box-icon">📋</div>
+        <div class="box-title">AI Opportunity List</div>
+        <div class="box-file"><span class="fname">components/OpportunityCard.jsx</span></div>
+        <div class="box-desc">Generated by: Analysis Engine + Embedding Validator. Each card shows: process name, AI use case category, impact level, rationale, and suggested tech stack.</div>
+        <span class="box-output-tag tag-output">→ Source: Claude Call 1 + Titan</span>
+      </div>
+
+      <div class="box output">
+        <div class="box-icon">🗺️</div>
+        <div class="box-title">Impact vs Complexity Matrix</div>
+        <div class="box-file"><span class="fname">components/ImpactMatrix.jsx</span></div>
+        <div class="box-desc">Generated by: Matrix Builder. Recharts scatter plot. X = Complexity (Low→High), Y = Impact (Low→High). Each dot = one AI opportunity. Color-coded by use case type.</div>
+        <span class="box-output-tag tag-output">→ Source: matrix_builder.py</span>
+      </div>
+
+      <div class="box output">
+        <div class="box-icon">🗓️</div>
+        <div class="box-title">Phased Roadmap</div>
+        <div class="box-file"><span class="fname">components/PhasedRoadmap.jsx</span></div>
+        <div class="box-desc">Generated by: Report Generator. 3-phase horizontal timeline. Phase 1: quick wins. Phase 2: core build. Phase 3: intelligence layer. Each phase lists its opportunities + milestone.</div>
+        <span class="box-output-tag tag-output">→ Source: Claude Call 2</span>
+      </div>
+
+      <div class="box output">
+        <div class="box-icon">🏗️</div>
+        <div class="box-title">Tech Stack Recommendations</div>
+        <div class="box-file"><span class="fname">components/TechStack.jsx</span></div>
+        <div class="box-desc">Generated by: Report Generator. Per-opportunity and overall recommended AWS + AI tech stack. Considers existing tools from form input to avoid redundant stack suggestions.</div>
+        <span class="box-output-tag tag-output">→ Source: Claude Call 2</span>
+      </div>
+
+      <div class="box output">
+        <div class="box-icon">📜</div>
+        <div class="box-title">Executive Summary</div>
+        <div class="box-file"><span class="fname">components/ExecutiveSummary.jsx</span></div>
+        <div class="box-desc">Generated by: Report Generator. Auto-generated prose paragraph. Covers: readiness score, top 3 opportunities, total time savings estimate, recommended first action, GDPR flags if any.</div>
+        <span class="box-output-tag tag-output">→ Source: Claude Call 2</span>
+      </div>
+
+      <div class="box output">
+        <div class="box-icon">⬇️</div>
+        <div class="box-title">PDF Export</div>
+        <div class="box-file"><span class="fname">utils/pdf_export.py</span></div>
+        <div class="box-desc">Server-side PDF generation via WeasyPrint / ReportLab. Formats all 5 outputs into a branded downloadable report. Triggered by <code>GET /report/:id/pdf</code>.</div>
+        <span class="box-output-tag tag-output">→ Source: Full Report JSON → .pdf</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTNOTES: File Index + Model Call Map -->
+<div class="footnote">
+
+  <div class="fn-card">
+    <div class="fn-title">📁 Frontend Files</div>
+    <ul class="fn-list">
+      <li>AssessmentForm.jsx</li>
+      <li>ProcessingScreen.jsx</li>
+      <li>ResultsDashboard.jsx</li>
+      <li>services/api.js</li>
+      <li>components/OpportunityCard.jsx</li>
+      <li>components/ImpactMatrix.jsx</li>
+      <li>components/PhasedRoadmap.jsx</li>
+      <li>components/TechStack.jsx</li>
+      <li>components/ExecutiveSummary.jsx</li>
+    </ul>
+  </div>
+
+  <div class="fn-card">
+    <div class="fn-title">⚙️ Backend Files</div>
+    <ul class="fn-list">
+      <li>main.py</li>
+      <li>routers/assessment.py</li>
+      <li>models/input_schema.py</li>
+      <li>models/output_schema.py</li>
+      <li>services/bedrock_client.py</li>
+      <li>services/analysis_engine.py</li>
+      <li>services/embedding_service.py</li>
+      <li>services/complexity_scorer.py</li>
+      <li>services/report_generator.py</li>
+    </ul>
+  </div>
+
+  <div class="fn-card">
+    <div class="fn-title">🛠️ Utility + Prompt Files</div>
+    <ul class="fn-list">
+      <li>prompts/analysis_prompt.py</li>
+      <li>prompts/report_prompt.py</li>
+      <li>utils/matrix_builder.py</li>
+      <li>utils/report_assembler.py</li>
+      <li>utils/pdf_export.py</li>
+      <li>db/database.py</li>
+      <li>db/models/assessment.py</li>
+      <li>db/models/report.py</li>
+    </ul>
+  </div>
+
+  <div class="fn-card">
+    <div class="fn-title">🤖 AI Model Call Map</div>
+    <ul class="fn-list">
+      <li>Claude Call 1 → Opportunity List</li>
+      <li>Claude Call 2 → Summary + Roadmap</li>
+      <li>Titan → Use Case Validation</li>
+      <li>Rule Engine → Complexity Score</li>
+      <li>Matrix Builder → Impact Grid</li>
+      <li>PDF Export → Downloadable Report</li>
+    </ul>
+  </div>
+
+</div>
+
+</body>
+</html>

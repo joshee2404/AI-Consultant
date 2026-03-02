@@ -1,0 +1,69 @@
+# ─── Python ───────────────────────────────────────────
+__pycache__/
+*.py[oc]
+*.pyo
+build/
+dist/
+wheels/
+*.egg-info
+.eggs/
+
+# ─── Virtual Environments ─────────────────────────────
+.venv
+backend/.venv
+
+# ─── Environment Variables ────────────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+docs/*.mp4
+# ─── Database ─────────────────────────────────────────
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+
+# ─── Logs ─────────────────────────────────────────────
+*.log
+logs/
+backend/logs/
+
+# ─── uv ───────────────────────────────────────────────
+# Keep uv.lock (commit this — it ensures reproducible installs)
+# but ignore the cache
+.uv/
+
+# ─── Node / React Frontend ────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+frontend/coverage/
+
+# ─── OS Files ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE / Editor ─────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursor/
+
+# ─── AWS ──────────────────────────────────────────────
+.aws/
+aws-exports.js
+
+# ─── Testing ──────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Keys
+frontend/.env
+backend/.env
+
